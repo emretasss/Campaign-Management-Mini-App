@@ -64,20 +64,25 @@ A full-stack web application for managing influencer marketing campaigns, built 
    Create a `.env.local` file in the root directory:
    ```env
    # Supabase Configuration
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
    
    # Database Configuration
-   DATABASE_URL=your_database_url_here
+   DATABASE_URL=postgresql://postgres:password@db.your-project-id.supabase.co:5432/postgres
    ```
 
 4. **Supabase Setup**
-   - Create a new Supabase project
-   - Get your project URL and anon key
-   - Update the environment variables
-   - Run the database migrations (see Database Setup below)
+   - Create a new Supabase project at [supabase.com](https://supabase.com)
+   - Go to Settings → API to get your project URL and keys
+   - Update the environment variables with your actual values
+   - Go to SQL Editor and run the database setup script (see Database Setup below)
+   - Enable Row Level Security (RLS) for all tables
+   - Configure authentication settings (email confirmation, etc.)
 
 5. **Database Setup**
+   
+   **Option A: Using Drizzle Migrations**
    ```bash
    # Generate migration files
    npm run db:generate
@@ -87,6 +92,88 @@ A full-stack web application for managing influencer marketing campaigns, built 
    
    # Seed with sample data (optional)
    npm run db:seed
+   ```
+   
+   **Option B: Manual SQL Setup (Recommended)**
+   - Go to Supabase Dashboard → SQL Editor
+   - Run the following SQL script to create tables and sample data:
+   ```sql
+   -- Create tables
+   CREATE TABLE IF NOT EXISTS public.campaigns (
+     id SERIAL PRIMARY KEY,
+     user_id UUID NOT NULL,
+     title VARCHAR(256) NOT NULL,
+     description TEXT,
+     budget NUMERIC(12,2) NOT NULL DEFAULT 0,
+     start_date DATE NOT NULL,
+     end_date DATE NOT NULL,
+     created_at TIMESTAMP DEFAULT NOW() NOT NULL
+   );
+   
+   CREATE TABLE IF NOT EXISTS public.influencers (
+     id SERIAL PRIMARY KEY,
+     name VARCHAR(256) NOT NULL,
+     follower_count INTEGER NOT NULL DEFAULT 0,
+     engagement_rate NUMERIC(5,2) NOT NULL DEFAULT 0,
+     created_at TIMESTAMP DEFAULT NOW() NOT NULL
+   );
+   
+   CREATE TABLE IF NOT EXISTS public.campaign_influencers (
+     campaign_id INTEGER NOT NULL,
+     influencer_id INTEGER NOT NULL,
+     PRIMARY KEY (campaign_id, influencer_id),
+     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
+     FOREIGN KEY (influencer_id) REFERENCES influencers(id) ON DELETE CASCADE
+   );
+   
+   -- Enable RLS
+   ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE public.influencers ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE public.campaign_influencers ENABLE ROW LEVEL SECURITY;
+   
+   -- Create RLS policies
+   CREATE POLICY "Users can view their own campaigns" ON public.campaigns FOR SELECT USING (auth.uid() = user_id);
+   CREATE POLICY "Users can insert their own campaigns" ON public.campaigns FOR INSERT WITH CHECK (auth.uid() = user_id);
+   CREATE POLICY "Users can update their own campaigns" ON public.campaigns FOR UPDATE USING (auth.uid() = user_id);
+   CREATE POLICY "Users can delete their own campaigns" ON public.campaigns FOR DELETE USING (auth.uid() = user_id);
+   
+   CREATE POLICY "Anyone can view influencers" ON public.influencers FOR SELECT USING (true);
+   CREATE POLICY "Authenticated users can insert influencers" ON public.influencers FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+   CREATE POLICY "Authenticated users can update influencers" ON public.influencers FOR UPDATE USING (auth.role() = 'authenticated');
+   CREATE POLICY "Authenticated users can delete influencers" ON public.influencers FOR DELETE USING (auth.role() = 'authenticated');
+   
+   CREATE POLICY "Users can view campaign influencers" ON public.campaign_influencers FOR SELECT USING (
+     EXISTS(SELECT 1 FROM public.campaigns c WHERE c.id = campaign_id AND c.user_id = auth.uid())
+   );
+   CREATE POLICY "Users can insert campaign influencers" ON public.campaign_influencers FOR INSERT WITH CHECK (
+     EXISTS(SELECT 1 FROM public.campaigns c WHERE c.id = campaign_id AND c.user_id = auth.uid())
+   );
+   CREATE POLICY "Users can delete campaign influencers" ON public.campaign_influencers FOR DELETE USING (
+     EXISTS(SELECT 1 FROM public.campaigns c WHERE c.id = campaign_id AND c.user_id = auth.uid())
+   );
+   
+   -- Insert sample influencers
+   INSERT INTO public.influencers (name, follower_count, engagement_rate) VALUES
+   ('techguru', 250000, 4.2),
+   ('fashionista', 180000, 3.8),
+   ('fitnesspro', 320000, 5.1),
+   ('foodlover', 150000, 4.5),
+   ('travelbug', 280000, 3.9),
+   ('gamingmaster', 450000, 6.2),
+   ('beautyqueen', 220000, 4.8),
+   ('lifestyleblogger', 190000, 4.1),
+   ('businessinsider', 120000, 3.2),
+   ('musicvibes', 350000, 5.5),
+   ('sportshighlight', 400000, 4.9),
+   ('comedyking', 500000, 7.1),
+   ('artgallery', 80000, 3.5),
+   ('petlover', 110000, 4.3),
+   ('cookingchef', 130000, 4.6),
+   ('motivationguru', 200000, 4.7),
+   ('techreviewer', 160000, 3.6),
+   ('fashiontrend', 140000, 4.0),
+   ('healthylife', 170000, 4.4),
+   ('entertainment', 380000, 5.8);
    ```
 
 6. **Start Development Server**
