@@ -1,36 +1,203 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Campaign Management Mini-App
 
-## Getting Started
+A full-stack web application for managing influencer marketing campaigns, built with Next.js, tRPC, Supabase, and Drizzle ORM.
 
-First, run the development server:
+## 🚀 Features
+
+- **Authentication**: Real Supabase Auth with signup/login
+- **Campaign Management**: Full CRUD operations for campaigns
+- **Influencer Assignment**: Assign influencers to campaigns
+- **Real-time Data**: Live updates with tRPC
+- **Responsive UI**: Beautiful, mobile-friendly interface
+- **Type Safety**: Full TypeScript support
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React 18, Tailwind CSS
+- **Backend**: tRPC, Node.js
+- **Database**: Supabase (PostgreSQL)
+- **ORM**: Drizzle ORM
+- **Authentication**: Supabase Auth
+- **Language**: TypeScript
+
+## 📋 Requirements
+
+1. **Authentication**
+   - Users can sign up and log in
+   - After logging in, users only see their own campaigns
+   - Uses Supabase Auth
+
+2. **Campaign Management (CRUD)**
+   - Create campaigns (title, description, budget, startDate, endDate)
+   - View list of user's campaigns
+   - Edit and delete campaigns
+
+3. **Influencer Assignment**
+   - Assign influencers to campaigns
+   - Mock data for creators (with full CRUD capability)
+   - Each influencer has: name, followerCount, engagementRate
+   - Show influencers linked to individual campaigns
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
+- PostgreSQL database
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd campaign-management-app
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+   Create a `.env.local` file in the root directory:
+   ```env
+   # Supabase Configuration
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+   
+   # Database Configuration
+   DATABASE_URL=your_database_url_here
+   ```
+
+4. **Supabase Setup**
+   - Create a new Supabase project
+   - Get your project URL and anon key
+   - Update the environment variables
+   - Run the database migrations (see Database Setup below)
+
+5. **Database Setup**
+   ```bash
+   # Generate migration files
+   npm run db:generate
+   
+   # Run migrations
+   npm run db:migrate
+   
+   # Seed with sample data (optional)
+   npm run db:seed
+   ```
+
+6. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+
+7. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🗄️ Database Schema
+
+The application uses the following database tables:
+
+- **users**: User accounts (extends Supabase auth.users)
+- **campaigns**: Marketing campaigns
+- **influencers**: Influencer profiles
+- **campaign_influencers**: Many-to-many relationship between campaigns and influencers
+
+## 🔧 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run db:generate` - Generate database migrations
+- `npm run db:migrate` - Run database migrations
+- `npm run db:seed` - Seed database with sample data
+
+## 🌐 Deployment
+
+### Vercel (Recommended)
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy!
+
+### Netlify
+
+1. Push your code to GitHub
+2. Connect your repository to Netlify
+3. Add environment variables in Netlify dashboard
+4. Deploy!
+
+## 📱 API Endpoints
+
+The application uses tRPC for type-safe API calls:
+
+- `campaigns.*` - Campaign management operations
+- `influencers.*` - Influencer management operations
+
+All endpoints are protected and require authentication.
+
+## 🔐 Authentication
+
+- Uses Supabase Auth for secure authentication
+- JWT tokens for session management
+- Protected routes and API endpoints
+- User-specific data isolation
+
+## 🎨 UI/UX Features
+
+- Responsive design for all device sizes
+- Modern, clean interface with Tailwind CSS
+- Smooth animations and transitions
+- Intuitive user experience
+- Mobile-first approach
+
+## 🧪 Testing
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Run tests
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📝 Contributing
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📄 License
 
-## Learn More
+This project is licensed under the MIT License.
 
-To learn more about Next.js, take a look at the following resources:
+## 🆘 Support
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+If you encounter any issues:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Check the [Issues](../../issues) page
+2. Create a new issue with detailed information
+3. Contact the development team
 
-## Deploy on Vercel
+## 🔄 Updates
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Stay updated with the latest changes:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Watch the repository
+- Check the [Releases](../../releases) page
+- Follow the development blog
+
+---
+
+**Built with ❤️ using Next.js, tRPC, Supabase, and Drizzle ORM**
+# Campaign-Management-Mini-App
