@@ -2,14 +2,36 @@
 
 A full-stack web application for managing influencer marketing campaigns, built with Next.js, tRPC, Supabase, and Drizzle ORM.
 
-## 🚀 Features
+## 🌐 Live Demo
 
-- **Authentication**: Real Supabase Auth with signup/login
-- **Campaign Management**: Full CRUD operations for campaigns
-- **Influencer Assignment**: Assign influencers to campaigns
-- **Real-time Data**: Live updates with tRPC
-- **Responsive UI**: Beautiful, mobile-friendly interface
-- **Type Safety**: Full TypeScript support
+**🔗 [View Live Demo](https://campaign-management-mini-app.vercel.app/)**
+
+## 📌 Goal
+
+Build a small full-stack web application that simulates a mini campaign management tool. The goal of this task is to evaluate skills in Next.js, tRPC, Supabase, and the ability to structure a simple full-stack project.
+
+## 🔹 Requirements
+
+### 1. Authentication
+- Implement a simple authentication system
+- Users should be able to sign up and log in
+- After logging in, a user should only see their own campaigns
+- Uses Supabase Auth (preferred)
+
+### 2. Campaign Management (CRUD)
+A logged-in user should be able to:
+- Create a campaign (fields: title, description, budget, startDate, endDate)
+- View a list of their campaigns
+- Edit and delete campaigns
+
+### 3. Influencer Assignment
+- A user should be able to assign influencers to a campaign
+- Uses mock data for creators (with full CRUD capability)
+- Each influencer should have at least:
+  - name
+  - followerCount
+  - engagementRate
+- Show a list of influencers linked to individual campaigns
 
 ## 🛠️ Tech Stack
 
@@ -20,23 +42,14 @@ A full-stack web application for managing influencer marketing campaigns, built 
 - **Authentication**: Supabase Auth
 - **Language**: TypeScript
 
-## 📋 Requirements
+## 🚀 Features
 
-1. **Authentication**
-   - Users can sign up and log in
-   - After logging in, users only see their own campaigns
-   - Uses Supabase Auth
-
-2. **Campaign Management (CRUD)**
-   - Create campaigns (title, description, budget, startDate, endDate)
-   - View list of user's campaigns
-   - Edit and delete campaigns
-
-3. **Influencer Assignment**
-   - Assign influencers to campaigns
-   - Mock data for creators (with full CRUD capability)
-   - Each influencer has: name, followerCount, engagementRate
-   - Show influencers linked to individual campaigns
+- **Authentication**: Real Supabase Auth with signup/login
+- **Campaign Management**: Full CRUD operations for campaigns
+- **Influencer Assignment**: Assign influencers to campaigns
+- **Real-time Data**: Live updates with tRPC
+- **Responsive UI**: Beautiful, mobile-friendly interface
+- **Type Safety**: Full TypeScript support
 
 ## 🚀 Getting Started
 
@@ -184,15 +197,6 @@ A full-stack web application for managing influencer marketing campaigns, built 
 7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🗄️ Database Schema
-
-The application uses the following database tables:
-
-- **users**: User accounts (extends Supabase auth.users)
-- **campaigns**: Marketing campaigns
-- **influencers**: Influencer profiles
-- **campaign_influencers**: Many-to-many relationship between campaigns and influencers
-
 ## 🔧 Available Scripts
 
 - `npm run dev` - Start development server
@@ -209,7 +213,11 @@ The application uses the following database tables:
 
 1. Push your code to GitHub
 2. Connect your repository to Vercel
-3. Add environment variables in Vercel dashboard
+3. Add environment variables in Vercel dashboard:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `DATABASE_URL`
 4. Deploy!
 
 ### Netlify
@@ -218,6 +226,15 @@ The application uses the following database tables:
 2. Connect your repository to Netlify
 3. Add environment variables in Netlify dashboard
 4. Deploy!
+
+## 🗄️ Database Schema
+
+The application uses the following database tables:
+
+- **users**: User accounts (extends Supabase auth.users)
+- **campaigns**: Marketing campaigns
+- **influencers**: Influencer profiles
+- **campaign_influencers**: Many-to-many relationship between campaigns and influencers
 
 ## 📱 API Endpoints
 
@@ -287,4 +304,3 @@ Stay updated with the latest changes:
 ---
 
 **Built with ❤️ using Next.js, tRPC, Supabase, and Drizzle ORM**
-# Campaign-Management-Mini-App
