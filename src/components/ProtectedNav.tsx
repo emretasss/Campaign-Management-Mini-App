@@ -14,7 +14,21 @@ export function ProtectedNav({ user }: ProtectedNavProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        alert("Logout failed. Please try again.");
+        return;
+      }
+      
+      // Redirect to login page
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert("Logout failed. Please try again.");
+    }
   };
 
   const navigation = [
@@ -51,12 +65,12 @@ export function ProtectedNav({ user }: ProtectedNavProps) {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-6 left-6 z-30">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 bg-white/70 backdrop-blur-xl rounded-xl shadow-lg border border-white/30"
+          className="p-2 sm:p-3 bg-white/70 backdrop-blur-xl rounded-xl shadow-lg border border-white/30"
         >
-          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
