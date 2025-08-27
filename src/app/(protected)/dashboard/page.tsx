@@ -2,22 +2,30 @@
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase/client";
-import React from "react";
+import React, { useState } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: campaigns, isLoading, refetch } = trpc.campaign.list.useQuery();
   const deleteMutation = trpc.campaign.delete.useMutation();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+
+
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; campaignId: number | null; campaignTitle: string }>({
+    isOpen: false,
+    campaignId: null,
+    campaignTitle: ''
+  });
+  
+  const handleDelete = async (id: number, title: string) => {
+    setDeleteModal({ isOpen: true, campaignId: id, campaignTitle: title });
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this campaign?")) {
-      await deleteMutation.mutateAsync({ id });
+  const confirmDelete = async () => {
+    if (deleteModal.campaignId) {
+      await deleteMutation.mutateAsync({ id: deleteModal.campaignId });
       refetch();
+      setDeleteModal({ isOpen: false, campaignId: null, campaignTitle: '' });
     }
   };
 
@@ -46,93 +54,141 @@ export default function DashboardPage() {
     }
   };
 
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-600">Loading campaigns...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+            <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-t-purple-600 rounded-full animate-spin mx-auto" style={{ animationDelay: '0.5s' }}></div>
+          </div>
+          <div>
+            <p className="text-gray-600 font-medium">Loading your campaigns...</p>
+            <p className="text-gray-400 text-sm mt-1">Please wait while we fetch your data</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-white/20 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Page Header */}
+      <div className="bg-white/70 backdrop-blur-xl border-b border-white/30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Campaign Dashboard
               </h1>
-              <p className="text-gray-600 mt-1">Manage your marketing campaigns</p>
+              <p className="text-gray-600 mt-1 flex items-center space-x-2">
+                <span>Manage your marketing campaigns</span>
+                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                <span className="text-sm text-gray-500">{campaigns?.length || 0} campaigns</span>
+              </p>
             </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/campaigns/new")}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                + Create Campaign
-              </button>
-              <button
-                onClick={handleLogout}
-                className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-              >
-                Logout
-              </button>
-            </div>
+            <button
+              onClick={() => router.push("/campaigns/new")}
+              className="group px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>Create Campaign</span>
+              </div>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-shadow duration-200">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+          <div className="group bg-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Campaigns</p>
+                  <p className="text-3xl font-bold text-gray-900">{campaigns?.length || 0}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Campaigns</p>
-                <p className="text-2xl font-bold text-gray-900">{campaigns?.length || 0}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-shadow duration-200">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Budget</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  ${campaigns?.reduce((sum, campaign) => sum + Number(campaign.budget), 0).toLocaleString() || 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-shadow duration-200">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Campaigns</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Active</div>
+                <div className="text-sm font-semibold text-emerald-600">
                   {campaigns?.filter(c => isActiveCampaign(c.end_date)).length || 0}
-                </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="group bg-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Budget</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    ${formatNumber(campaigns?.reduce((sum, campaign) => sum + Number(campaign.budget), 0) || 0)}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Avg/Campaign</div>
+                <div className="text-sm font-semibold text-emerald-600">
+                  ${campaigns && campaigns.length > 0 
+                    ? formatNumber(Math.round(campaigns.reduce((sum, campaign) => sum + Number(campaign.budget), 0) / campaigns.length))
+                    : '0'
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="group bg-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Active Campaigns</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {campaigns?.filter(c => isActiveCampaign(c.end_date)).length || 0}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Ending Soon</div>
+                <div className="text-sm font-semibold text-orange-600">
+                  {campaigns?.filter(c => {
+                    const end = new Date(c.end_date);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                    return daysLeft <= 7 && daysLeft > 0;
+                  }).length || 0}
+                </div>
               </div>
             </div>
           </div>
@@ -143,17 +199,24 @@ export default function DashboardPage() {
           {campaigns?.map((campaign, index) => (
             <div
               key={campaign.id}
-              className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-in"
+              className="group bg-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/30 hover:shadow-2xl transition-all duration-300 hover:scale-105 animate-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-semibold text-gray-900 line-clamp-2">
-                  {campaign.title}
-                </h3>
-                <div className="flex space-x-2">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-bold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors duration-200">
+                    {campaign.title}
+                  </h3>
+                  {campaign.description && (
+                    <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                      {campaign.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex space-x-2 ml-4">
                   <button
                     onClick={() => router.push(`/campaigns/${campaign.id}`)}
-                    className="text-indigo-600 hover:text-indigo-700 p-1 hover:bg-indigo-50 rounded-lg transition-colors duration-200"
+                    className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl transition-all duration-200 group-hover:scale-110"
                     title="View Campaign"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +226,7 @@ export default function DashboardPage() {
                   </button>
                   <button
                     onClick={() => router.push(`/campaigns/${campaign.id}/edit`)}
-                    className="text-gray-600 hover:text-gray-700 p-1 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                    className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200 group-hover:scale-110"
                     title="Edit Campaign"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,8 +234,8 @@ export default function DashboardPage() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => handleDelete(campaign.id)}
-                    className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    onClick={() => handleDelete(campaign.id, campaign.title)}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 group-hover:scale-110"
                     title="Delete Campaign"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,36 +245,55 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {campaign.description && (
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {campaign.description}
-                </p>
-              )}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200/50">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Budget</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        ${Number(campaign.budget).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Budget</span>
-                  <span className="text-sm font-semibold text-gray-900">
-                    ${Number(campaign.budget).toLocaleString()}
-                  </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl border border-emerald-200/50">
+                    <p className="text-xs text-gray-500 mb-1">Start</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {formatDate(campaign.start_date)}
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl border border-orange-200/50">
+                    <p className="text-xs text-gray-500 mb-1">End</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {formatDate(campaign.end_date)}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Duration</span>
-                  <span className="text-sm text-gray-900">
-                    {formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Status</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    isActiveCampaign(campaign.end_date)
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {isActiveCampaign(campaign.end_date) ? 'Active' : 'Ended'}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      isActiveCampaign(campaign.end_date) ? 'bg-emerald-500' : 'bg-gray-400'
+                    }`}></div>
+                    <span className={`text-sm font-medium ${
+                      isActiveCampaign(campaign.end_date) ? 'text-emerald-700' : 'text-gray-600'
+                    }`}>
+                      {isActiveCampaign(campaign.end_date) ? 'Active' : 'Ended'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => router.push(`/campaigns/${campaign.id}`)}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-all duration-200"
+                  >
+                    View Details →
+                  </button>
                 </div>
               </div>
             </div>
@@ -219,23 +301,73 @@ export default function DashboardPage() {
         </div>
 
         {campaigns?.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center py-16">
+            <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-8">
+              <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No campaigns yet</h3>
-            <p className="text-gray-600 mb-6">Get started by creating your first campaign</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">No campaigns yet</h3>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">Start building your marketing success by creating your first campaign. Track performance, manage budgets, and collaborate with influencers all in one place.</p>
             <button
               onClick={() => router.push("/campaigns/new")}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              Create Your First Campaign
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>Create Your First Campaign</span>
+              </div>
             </button>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-white/30 animate-in">
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Campaign</h3>
+                <p className="text-gray-600">
+                  Are you sure you want to delete <span className="font-semibold text-gray-900">"{deleteModal.campaignTitle}"</span>? 
+                  This action cannot be undone.
+                </p>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setDeleteModal({ isOpen: false, campaignId: null, campaignTitle: '' })}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleteMutation.isPending}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                >
+                  {deleteMutation.isPending ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Deleting...</span>
+                    </div>
+                  ) : (
+                    'Delete Campaign'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
